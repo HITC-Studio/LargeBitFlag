@@ -1,5 +1,4 @@
 use std::cmp;
-use std::ops;
 
 #[cfg(test)]
 mod lib_tests;
@@ -15,15 +14,24 @@ fn get_arch_bits() -> usize {
     };
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct LargeBitFlag {
     bit_flags: Vec<usize>,
 }
 
+// impl fmt::Debug for LargeBitFlag {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         for index in (self.bit_flags.len()-1)..=0 {
+//             let _ = write!(f, "{}", self.bit_flags[index]);
+//         }
+//         return write!(f, "\n");
+//     }
+// }
+
 impl LargeBitFlag {
     pub fn new() -> LargeBitFlag {
         return LargeBitFlag {
-            bit_flags: Vec::<usize>::new(),
+            bit_flags: vec![0; 2],
         };
     }
 
@@ -33,9 +41,7 @@ impl LargeBitFlag {
     // array and bit
     pub fn new_set_single_bit(which_bit: usize) -> LargeBitFlag {
         if which_bit == 0 {
-            return LargeBitFlag {
-                bit_flags: Vec::<usize>::new(),
-            };
+            return LargeBitFlag::new();
         }
 
         let arch_bits: usize = get_arch_bits();
@@ -110,9 +116,7 @@ impl LargeBitFlag {
     // Set a single bit for a single array
     pub fn new_set_array_and_single_bit(which_array: isize, which_bit: usize) -> LargeBitFlag {
         if which_bit == 0 || which_array == 0 {
-            return LargeBitFlag {
-                bit_flags: Vec::<usize>::new(),
-            };
+            return LargeBitFlag::new();
         }
 
         let arch_bits: usize = get_arch_bits();
@@ -139,10 +143,15 @@ impl LargeBitFlag {
             ),
         };
 
+        let modified_which_array_as_usize: usize = match which_array_as_usize.checked_add(1) {
+            Some(value) => value,
+            None => panic!("Unable to add 1 to {}", which_array_as_usize),
+        };
+
         let mut result: LargeBitFlag = LargeBitFlag {
             // Have to reserve, in order to index the correct location
             // to directly set the bit
-            bit_flags: vec![0; which_array_as_usize],
+            bit_flags: vec![0; modified_which_array_as_usize],
         };
 
         let modified_bit: usize = match which_bit.checked_sub(1) {
@@ -150,12 +159,7 @@ impl LargeBitFlag {
             None => panic!("Unable to subtract 1 from {}", which_bit),
         };
 
-        let modified_which_array_as_usize: usize = match which_array_as_usize.checked_sub(1) {
-            Some(value) => value,
-            None => panic!("Unable to subtract 1 from {}", which_array_as_usize),
-        };
-
-        result.bit_flags[modified_which_array_as_usize] = 1 << modified_bit;
+        result.bit_flags[which_array_as_usize] = 1 << modified_bit;
 
         return result;
     }
@@ -171,61 +175,16 @@ impl LargeBitFlag {
         );
 
         let mut result: LargeBitFlag = LargeBitFlag {
-            bit_flags: Vec::<usize>::new(),
+            bit_flags: Vec::<usize>::with_capacity(which_bits.len() + 1),
         };
 
+        result.bit_flags.push(0);
         result.bit_flags.extend_from_slice(which_bits);
 
         return result;
     }
-}
 
-/*
-let x: LargeBitFlag;
-let y: LargeBitFlag;
-let z: LargeBitFlag = x & y;
-ANDs two LargeBitFlags together and returns
-a new one.
-Both varaibles are passed in by reference, not by value (move)
-*/
-impl<'a> ops::BitAnd<&'a LargeBitFlag> for &'a LargeBitFlag {
-    type Output = LargeBitFlag;
-
-    fn bitand(self, rhs: Self) -> LargeBitFlag {
-        let mut result: LargeBitFlag = LargeBitFlag::new();
-
-        let self_size: usize = self.bit_flags.len();
-        let rhs_size: usize = rhs.bit_flags.len();
-
-        let reserve_size: usize = if self_size == rhs_size {
-            self_size
-        } else if self_size > rhs_size {
-            rhs_size
-        } else {
-            self_size
-        };
-
-        result.bit_flags.reserve(reserve_size);
-        for index in 0..reserve_size {
-            result
-                .bit_flags
-                .push(self.bit_flags[index] & rhs.bit_flags[index]);
-        }
-
-        return result;
-    }
-}
-
-/*
-let x: LargeBitFlag;
-let y: LargeBitFlag;
-x &= y;
-ANDs two LargeBitFlags together, placing
-the result into the LHS (SELF) variable
-Both varaibles are passed in by reference, not by value (move)
-*/
-impl<'a> ops::BitAndAssign<&'a LargeBitFlag> for LargeBitFlag {
-    fn bitand_assign(&mut self, rhs: &'a LargeBitFlag) {
+    pub fn and_bit(&mut self, rhs: &LargeBitFlag) {
         let self_size: usize = self.bit_flags.len();
         let rhs_size: usize = rhs.bit_flags.len();
 
@@ -239,64 +198,12 @@ impl<'a> ops::BitAndAssign<&'a LargeBitFlag> for LargeBitFlag {
 
         self.bit_flags.truncate(truncate_size);
 
-        for index in 0..truncate_size {
+        for index in 1..truncate_size {
             self.bit_flags[index] = self.bit_flags[index] & rhs.bit_flags[index];
         }
     }
-}
 
-/*
-let x: LargeBitFlag;
-let y: LargeBitFlag;
-let z: LargeBitFlag = x | y;
-ORs two LargeBitFlags together and returns
-a new one.
-Both variables are passed by reference, not by value (move)
-*/
-impl<'a> ops::BitOr<&'a LargeBitFlag> for &'a LargeBitFlag {
-    type Output = LargeBitFlag;
-
-    fn bitor(self, rhs: Self) -> LargeBitFlag {
-        let mut result: LargeBitFlag = LargeBitFlag::new();
-
-        let self_size: usize = self.bit_flags.len();
-        let rhs_size: usize = rhs.bit_flags.len();
-
-        let reserve_size: usize = if self_size == rhs_size {
-            self_size
-        } else if self_size > rhs_size {
-            self_size
-        } else {
-            rhs_size
-        };
-
-        result.bit_flags.reserve(reserve_size);
-        for index in 0..reserve_size {
-            result
-                .bit_flags
-                .push(if index < self_size && index < rhs_size {
-                    self.bit_flags[index] | rhs.bit_flags[index]
-                } else if index > rhs_size {
-                    self.bit_flags[index]
-                } else {
-                    rhs.bit_flags[index]
-                });
-        }
-
-        return result;
-    }
-}
-
-/*
-let x: LargeBitFlag;
-let y: LargeBitFlag;
-x |= y;
-ORs two LargeBitFlags together, placing
-the result into the LHS variable
-Both variables are passed by reference, not by value (move)
-*/
-impl<'a> ops::BitOrAssign<&'a LargeBitFlag> for LargeBitFlag {
-    fn bitor_assign(&mut self, rhs: &'a LargeBitFlag) {
+    pub fn or_bit(&mut self, rhs: &LargeBitFlag) {
         let self_size: usize = self.bit_flags.len();
         let rhs_size: usize = rhs.bit_flags.len();
 
@@ -309,16 +216,114 @@ impl<'a> ops::BitOrAssign<&'a LargeBitFlag> for LargeBitFlag {
         };
 
         self.bit_flags.resize(resize_size, 0);
-        for index in 0..resize_size {
-            self.bit_flags[index] = if index <= self_size && index <= rhs_size {
+        for index in 1..resize_size {
+            self.bit_flags[index] = if index < self_size && index < rhs_size {
                 self.bit_flags[index] | rhs.bit_flags[index]
-            } else if index > rhs_size {
+            } else if index >= rhs_size {
                 self.bit_flags[index]
             } else {
                 rhs.bit_flags[index]
             };
         }
     }
+
+    pub fn set_bit(&mut self, rhs: &LargeBitFlag) {
+        return self.or_bit(rhs);
+    }
+
+    pub fn unset_bit(&mut self, rhs: &LargeBitFlag) {
+        // Must treat all empty array indices of rhs as full of 1s
+        // Which means that for any array indices of self that extend
+        // past rhs, remain unchanged
+
+        let self_size: usize = self.bit_flags.len();
+        let rhs_size: usize = rhs.bit_flags.len();
+
+        let min_size: usize = if self_size == rhs_size {
+            self_size
+        } else if self_size < rhs_size {
+            self_size
+        } else {
+            rhs_size
+        };
+
+        for index in 1..min_size {
+            self.bit_flags[index] &= !rhs.bit_flags[index];
+        }
+    }
+
+    pub fn is_bit_set(&self, rhs: &LargeBitFlag) -> bool {        
+        return &and_bits(self, rhs) != &LargeBitFlag::new();
+    }
+
+    pub fn invert(&mut self) {
+        for index in 1..self.bit_flags.len() {
+            self.bit_flags[index] = !self.bit_flags[index];
+        }
+    }
+}
+
+pub fn and_bits(lhs: &LargeBitFlag, rhs: &LargeBitFlag) -> LargeBitFlag {
+    let mut result: LargeBitFlag = LargeBitFlag::new();
+
+    let lhs_size: usize = lhs.bit_flags.len();
+    let rhs_size: usize = rhs.bit_flags.len();
+
+    let resize_size: usize = if lhs_size == rhs_size {
+        lhs_size
+    } else if lhs_size > rhs_size {
+        rhs_size
+    } else {
+        lhs_size
+    };
+
+    result.bit_flags.resize(resize_size, 0);
+    for index in 1..resize_size {
+        result
+            .bit_flags[index] = 
+            lhs.bit_flags[index] & rhs.bit_flags[index];
+    }
+
+    return result;
+}
+
+pub fn or_bits(lhs: &LargeBitFlag, rhs: &LargeBitFlag) -> LargeBitFlag {
+    let mut result: LargeBitFlag = LargeBitFlag::new();
+
+    let lhs_size: usize = lhs.bit_flags.len();
+    let rhs_size: usize = rhs.bit_flags.len();
+
+    let resize_size: usize = if lhs_size == rhs_size {
+        lhs_size
+    } else if lhs_size > rhs_size {
+        lhs_size
+    } else {
+        rhs_size
+    };
+
+    result.bit_flags.resize(resize_size, 0);
+    for index in 1..resize_size {
+        result
+            .bit_flags[index] = if index < lhs_size && index < rhs_size {
+                lhs.bit_flags[index] | rhs.bit_flags[index]
+            } else if index >= rhs_size {
+                lhs.bit_flags[index]
+            } else {
+                rhs.bit_flags[index]
+            };
+    }
+
+    return result;
+}
+
+pub fn invert(bit: &LargeBitFlag) -> LargeBitFlag {
+    let mut result: LargeBitFlag = LargeBitFlag::new();
+
+    for index in 1..bit.bit_flags.len() {
+        result.bit_flags.push(!bit.bit_flags[index]);
+    }
+
+    return result;
 }
 
 /*
@@ -327,7 +332,7 @@ let y: LargeBitFlag;
 if x == y
 Both variables are passed by reference, not by value (move)
 */
-impl<'a> cmp::PartialEq<&'a LargeBitFlag> for &'a LargeBitFlag {
+impl cmp::PartialEq for LargeBitFlag {
     fn eq(&self, rhs: &Self) -> bool {
         let self_size: usize = self.bit_flags.len();
         let rhs_size: usize = rhs.bit_flags.len();
@@ -336,7 +341,7 @@ impl<'a> cmp::PartialEq<&'a LargeBitFlag> for &'a LargeBitFlag {
 
         let max_size: usize = cmp::max(self_size, rhs_size);
 
-        for index in 0..max_size {
+        for index in 1..max_size {
             if self_size == max_size && rhs_size == max_size {
                 if self.bit_flags[index] != rhs.bit_flags[index] {
                     return false;
@@ -371,4 +376,4 @@ impl<'a> cmp::PartialEq<&'a LargeBitFlag> for &'a LargeBitFlag {
 /*
 Not sure about this, but I think it calls PartialEq
 */
-impl<'a> cmp::Eq for &'a LargeBitFlag {}
+impl cmp::Eq for LargeBitFlag {}

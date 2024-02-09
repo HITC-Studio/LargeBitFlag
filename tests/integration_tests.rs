@@ -1,4 +1,4 @@
-use large_bit_flag::LargeBitFlag;
+use large_bit_flag::*;
 
 #[test]
 fn test_eq_large_bit_flag() {
@@ -83,45 +83,45 @@ fn test_bit_and_large_bit_flag() {
     let x: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
-    assert_eq!(&(&x & &y) == &z, true);
+    assert_eq!(&and_bits(&x, &y) == &z, true);
 
     let x: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(2);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(0);
-    assert_eq!(&(&x & &y) == &z, true);
+    assert_eq!(&and_bits(&x, &y) == &z, true);
 
     let x: LargeBitFlag = LargeBitFlag::new_set_single_bit(5);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(5);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(5);
-    assert_eq!(&(&x & &y) == &z, true);
+    assert_eq!(&and_bits(&x, &y) == &z, true);
 
     let x: LargeBitFlag = LargeBitFlag::new_set_single_bit(0);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(0);
-    assert_eq!(&(&x & &y) == &z, true);
+    assert_eq!(&and_bits(&x, &y) == &z, true);
 
     let mut x: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
-    x &= &y;
+    x.and_bit(&y);
     assert_eq!(&x == &z, true);
 
     let mut x: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(2);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(0);
-    x &= &y;
+    x.and_bit(&y);
     assert_eq!(&x == &z, true);
 
     let mut x: LargeBitFlag = LargeBitFlag::new_set_single_bit(5);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(5);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(5);
-    x &= &y;
+    x.and_bit(&y);
     assert_eq!(&x == &z, true);
 
     let mut x: LargeBitFlag = LargeBitFlag::new_set_single_bit(0);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(0);
-    x &= &y;
+    x.and_bit(&y);
     assert_eq!(&x == &z, true);
 }
 
@@ -130,44 +130,44 @@ fn test_bit_or_large_bit_flag() {
     let x: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
-    assert_eq!(&(&x | &y) == &z, true);
+    assert_eq!(&or_bits(&x, &y) == &z, true);
 
     let x: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(2);
     let z: LargeBitFlag = LargeBitFlag::new_set_array_of_bits(&[1 << 0 | 1 << 1]);
-    assert_eq!(&(&x | &y) == &z, true);
+    assert_eq!(&or_bits(&x, &y) == &z, true);
 
     let x: LargeBitFlag = LargeBitFlag::new_set_single_bit(5);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(5);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(5);
-    assert_eq!(&(&x | &y) == &z, true);
+    assert_eq!(&or_bits(&x, &y) == &z, true);
 
     let x: LargeBitFlag = LargeBitFlag::new_set_single_bit(0);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
-    assert_eq!(&(&x | &y) == &z, true);
+    assert_eq!(&or_bits(&x, &y) == &z, true);
 
     let mut x: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
-    x |= &y;
+    x.or_bit(&y);
     assert_eq!(&x == &z, true);
 
     let mut x: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(2);
     let z: LargeBitFlag = LargeBitFlag::new_set_array_of_bits(&[1 << 0 | 1 << 1]);
-    x |= &y;
+    x.or_bit(&y);
     assert_eq!(&x == &z, true);
 
     let mut x: LargeBitFlag = LargeBitFlag::new_set_single_bit(5);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(5);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(5);
-    x |= &y;
+    x.or_bit(&y);
     assert_eq!(&x == &z, true);
 
     let mut x: LargeBitFlag = LargeBitFlag::new_set_single_bit(0);
     let y: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
     let z: LargeBitFlag = LargeBitFlag::new_set_single_bit(1);
-    x |= &y;
+    x.or_bit(&y);
     assert_eq!(&x == &z, true);
 }
